@@ -33,6 +33,14 @@ const EXAMPLE_SEARCH_RESULTS = {results:[{
 //
 //You can test this function by passing it one of the above array items
 //(e.g., `EXAMPLE_SEARCH_RESULTS.results[0]).
+function renderTrack(song) {
+  let elem = document.createElement('img');
+  elem.src = song.artworkUrl100;
+  elem.alt = song.trackName;
+  elem.title = song.trackName;
+  document.querySelector('#records').appendChild(elem);
+}
+renderTrack(EXAMPLE_SEARCH_RESULTS.results[0]);
 
 
 
@@ -44,13 +52,16 @@ const EXAMPLE_SEARCH_RESULTS = {results:[{
 //"clear" the previously displayed results first!
 //
 //You can test this function by passing it the `EXAMPLE_SEARCH_RESULTS` object.
-
-
-
-//Now it's the time to practice using `fetch()`! First, modify the `index.html`
-//file to load the polyfills for _BOTH_ the fetch() function and Promises, so
-//that your example will work on Internet Explorer.
-//Use version 2.0.4 of the `fetch` polyfill.
+function renderSearchResults(music) {
+  document.querySelector('#records').innerHTML = "";
+  if (music.results.length == 0) {
+    renderError(new Error("No results found"));
+  } else {
+    for (var i = 0; i < music.results.length; i++) {
+      renderTrack(music.results[i]);
+    }
+  }
+}
 
 
 //Define a function `fetchTrackList()` that takes in a "search term" string as a
@@ -68,22 +79,46 @@ const EXAMPLE_SEARCH_RESULTS = {results:[{
 //You can test this function by calling the method and passing it the name of 
 //your favorite band (you CANNOT test it with the search button yet!)
 const URL_TEMPLATE = "https://itunes.apple.com/search?entity=song&limit=25&term={searchTerm}";
-
-
+function fetchTrackList(searchTerm) {
+  togglerSpinner();
+  let promise = fetch(URL_TEMPLATE.replace("{searchTerm}", searchTerm))
+  .then((response) => {
+    return response.json();
+  })
+  .then(
+    renderSearchResults
+  )
+  .catch(
+    renderError
+  )
+  .then(
+    togglerSpinner
+  )
+  return promise;
+}
 
 
 //Add an event listener to the "search" button so that when it is clicked (and 
 //the the form is submitted) your `fetchTrackList()` function is called with the
 //user-entered `#searchQuery` value. Use the `preventDefault()` function to keep
 //the form from being submitted as usual (and navigating to a different page).
-
+document.querySelector('button').addEventListener('click', (event) => {
+  event.preventDefault();
+  let query = document.querySelector('#searchQuery');
+  fetchTrackList(query.value);
+})
 
 
 //Next, add some error handling to the page. Define a function `renderError()`
 //that takes in an "Error object" and displays that object's `message` property
 //on the page. Display this by creating a `<p class="alert alert-danger">` and
 //placing that alert inside the `#records` element.
-
+function renderError(errorObj) {
+  let errMsg = document.createElement("p");
+  errMsg.classList.add("alert", "alert-danger");
+  errMsg.textContent = errorObj.message;
+  document.querySelector('#records').appendChild(errMsg);
+}
 
 
 //Add the error handing to your program in two ways:
@@ -107,7 +142,9 @@ const URL_TEMPLATE = "https://itunes.apple.com/search?entity=song&limit=25&term=
 //spinner (show it) BEFORE you send the AJAX request, and toggle it back off
 //after the ENTIRE request is completed (including after any error catching---
 //download the data and `catch()` the error, and `then()` show the spinner.
-
+function togglerSpinner() {
+  document.querySelector('.fa-spinner').classList.toggle('d-none');
+}
 
 
 
